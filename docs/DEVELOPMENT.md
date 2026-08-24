@@ -45,10 +45,10 @@ Yêu cầu:
 - Git có hỗ trợ submodule.
 - Kết nối tới Google Maven và Maven Central cho lần resolve dependency đầu tiên.
 
-Clone nhánh phát triển:
+Clone phiên bản chính:
 
 ```bash
-git clone --recurse-submodules --branch develop/android-14-16 https://github.com/LamPPKK/MultiApp.git
+git clone --recurse-submodules https://github.com/LamPPKK/MultiApp.git
 cd MultiApp
 git submodule update --init --recursive
 ```

@@ -1,4 +1,4 @@
 [submodule "opensdk"]
 	path = opensdk
 	url = https://github.com/LamPPKK/opensdk.git
-	branch = develop/android-14-16
+	branch = main
