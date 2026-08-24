@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.waxmoon"
     android:sharedUserId="org.waxmoon.github">
 
     <!--高危权限-->
@@ -17,6 +16,8 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- mediaLocation -->
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
@@ -37,8 +38,8 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
@@ -100,6 +101,7 @@
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <uses-permission android:name="com.open.gallery.smart.Read"/>
     <uses-permission android:name="com.open.gallery.smart.Write"/>
@@ -110,11 +112,12 @@
 
     <application
         android:name=".MoonApplication"
+        android:enableOnBackInvokedCallback="false"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:allowNativeHeapPointerTagging="false"
         android:largeHeap="true"
-        android:extractNativeLibs="true"
+        android:pageSizeCompat="enabled"
         android:multiArch="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -122,6 +125,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GithubMultiApp" >
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
         <activity
             android:name=".AppListActivity"
             android:exported="true"

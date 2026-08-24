@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace 'org.waxmoon'
     compileSdk rootProject.ext.compileSdkVersion
 
 
@@ -12,17 +13,16 @@ android {
         targetSdk rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
+        missingDimensionStrategy 'runtime', 'assistant'
 
         ndk.abiFilters 'armeabi-v7a'
 
-        if (!rootProject.ext.isMasterPkg) {
-            manifestPlaceholders = [masterPkg: "${rootProject.ext.masterPkg}"]
-        }
+        manifestPlaceholders = [masterPkg: rootProject.ext.masterPkg]
     }
 
     buildTypes {
         release {
-            aaptOptions {
+            androidResources {
                 ignoreAssetsPattern '!com.waxmoon.ma.gp.apk:!moon.jar'
             }
             signingConfig signingConfigs.debug
@@ -33,32 +33,39 @@ android {
 
     }
 
-    build.doLast {
-        FileTree apks = fileTree(dir: "${buildDir}" + "/outputs/apk/release", include: ['*.apk'])
-        apks.each { File file ->
-            if (file.name.endsWith("unaligned.apk")) {
-                delete file
-            } else {
-                File tmp = new File("${rootProject.rootDir}/app/src/main/assets/")
-                tmp.mkdirs()
-                println(file)
-                println(tmp)
-                copy {
-                    from file
-                    into tmp
-                    include file.name
-                    rename (file.name,"assist.apk")
-                }
-
-            }
-        }
-    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility rootProject.ext.javaVersion
+        targetCompatibility rootProject.ext.javaVersion
+    }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
 dependencies {
     implementation project(path: ':opensdk')
+}
+
+tasks.register('syncAssistDebugApk', Sync) {
+    group = 'distribution'
+    description = 'Builds the debug 32-bit assistant and embeds it in the debug master application assets.'
+    dependsOn tasks.named('assembleDebug')
+    from(layout.buildDirectory.dir('outputs/apk/debug')) {
+        include 'assist-debug.apk'
+        rename { 'assist.apk' }
+    }
+    into rootProject.layout.projectDirectory.dir('app/src/main/assets')
+}
+
+tasks.register('syncAssistApk', Sync) {
+    group = 'distribution'
+    description = 'Builds the 32-bit assistant and embeds it in the master application assets.'
+    dependsOn tasks.named('assembleRelease')
+    from(layout.buildDirectory.dir('outputs/apk/release')) {
+        include 'assist-release.apk'
+        rename { 'assist.apk' }
+    }
+    into rootProject.layout.projectDirectory.dir('app/src/main/assets')
 }

@@ -1,24 +1,27 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
+    namespace 'org.waxmoon'
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         if (rootProject.ext.isMasterPkg) {
             applicationId rootProject.ext.masterPkg
-            manifestPlaceholders = [label: "Waxmoon"]
+            manifestPlaceholders = [label: "Waxmoon", masterPkg: rootProject.ext.masterPkg]
         } else {
             applicationId rootProject.ext.assistPkg
-            manifestPlaceholders = [label: "Waxmoon32"]
+            manifestPlaceholders = [label: "Waxmoon32", masterPkg: rootProject.ext.masterPkg]
             ndk.abiFilters 'armeabi-v7a'
         }
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
+        missingDimensionStrategy 'runtime', 'master'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -39,20 +42,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
+        sourceCompatibility rootProject.ext.javaVersion
+        targetCompatibility rootProject.ext.javaVersion
     }
     buildFeatures {
         compose true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion compose_version
-        kotlinCompilerVersion kotlin_version
-    }
-    packagingOptions {
+    packaging {
         resources {
             excludes += '/META-INF/*'
         }
@@ -60,42 +56,59 @@ android {
             useLegacyPackaging = true
         }
     }
-    lintOptions {
+    lint {
         checkReleaseBuilds true
         quiet true
         abortOnError false
         ignoreWarnings true
-        textOutput "stdout"
-        textReport false
-        disable "UnusedResources", 'RestrictedApi'
-        disable 'TypographyFractions', 'TypographyQuotes'
-        enable 'RtlHardcoded', 'RtlCompat', 'RtlEnabled'
-        check 'NewApi', 'InlinedApi'
+        disable += ["UnusedResources", 'RestrictedApi', 'TypographyFractions', 'TypographyQuotes']
+        enable += ['RtlHardcoded', 'RtlCompat', 'RtlEnabled']
+        checkOnly += ['NewApi', 'InlinedApi']
     }
 }
 
-tasks.withType(Javadoc) {
+tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:none', '-quiet')
     options.addStringOption('encoding', 'UTF-8')
     options.addStringOption('charSet', 'UTF-8')
     options.encoding = "UTF-8"
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
 dependencies {
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-    implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
-    implementation 'com.google.android.material:material:1.6.1'
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.0'
-    implementation 'androidx.activity:activity-compose:1.5.0'
-    testImplementation 'junit:junit:4.+'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    def composeBom = platform("androidx.compose:compose-bom:${rootProject.ext.composeBomVersion}")
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation 'androidx.core:core-ktx:1.18.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material:material'
+    implementation 'androidx.compose.material:material-icons-core'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
+    implementation 'androidx.activity:activity-compose:1.13.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
     implementation project(path: ':opensdk')
+}
+
+// Master APKs must never package the stale prebuilt assistant from source control.
+tasks.matching { it.name == 'preDebugBuild' }.configureEach {
+    dependsOn ':assist:syncAssistDebugApk'
+}
+
+tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
+    dependsOn ':assist:syncAssistApk'
 }

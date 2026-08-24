@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -27,6 +28,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.waxmoon.ui.theme.GithubMultiAppTheme
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -42,11 +45,13 @@ import androidx.core.content.FileProvider
 import com.hack.opensdk.BuildConfig
 import com.hack.opensdk.CmdConstants
 import com.hack.opensdk.HackApi
+import com.hack.server.core.HackServerProvider
 import com.hack.utils.FileUtils
 import java.io.File
 class AppListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             GithubMultiAppTheme {
                 Surface(color = MaterialTheme.colors.background) {
@@ -54,6 +59,11 @@ class AppListActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        HackServerProvider.ensureForegroundService(this)
     }
 }
 
@@ -163,6 +173,9 @@ fun AssistInstallDialog() {
 @Composable
 fun AppLayout() {
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
         topBar = { MyAppBar() },
         content = { innerPadding ->
             BodyContent(Modifier.padding(innerPadding))
@@ -186,7 +199,7 @@ fun MyAppBar() {
                     }
                 }
             ) {
-                Icon(Icons.Filled.ArrowLeft, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
             }
             Text(text = stringResource(R.string.text_space) + userId, Modifier.padding(3.dp))
             IconButton(
@@ -194,7 +207,7 @@ fun MyAppBar() {
                     userId = ++userSpace
                 }
             ) {
-                Icon(Icons.Filled.ArrowRight, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
 
             IconButton(onClick = {
@@ -289,7 +302,7 @@ fun ApkItem(modifier: Modifier = Modifier, apkInfo: ApkInfo) {
 
             IconButton(onClick = { isExpanded = !isExpanded }) {
                 Icon(
-                    imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
                     contentDescription =
                     if (isExpanded)
                         stringResource(R.string.item_show_less)
@@ -414,7 +427,10 @@ class ApkInfo constructor(val apkPath: String, val sysInstalled: Boolean) {
         val pkgInfo: PackageInfo?
         if (sysInstalled && pkg != null) {
             pkgInfo = pm.getPackageInfo(pkg, 0)
-            val labelId: Int = pkgInfo.applicationInfo.labelRes
+            val applicationInfo = checkNotNull(pkgInfo.applicationInfo) {
+                "Package $pkg has no ApplicationInfo"
+            }
+            val labelId: Int = applicationInfo.labelRes
             when (labelId) {
                 0 -> { label = pkgInfo.packageName}
                 else -> {
@@ -426,12 +442,14 @@ class ApkInfo constructor(val apkPath: String, val sysInstalled: Boolean) {
             label = pkgInfo?.packageName ?: ""
         }
         if (pkgInfo != null) {
-            pkgInfo.applicationInfo.publicSourceDir
+            val applicationInfo = checkNotNull(pkgInfo.applicationInfo) {
+                "Package ${pkgInfo.packageName} has no ApplicationInfo"
+            }
             pkgName = pkgInfo.packageName
-            version = pkgInfo.versionName
-            val icon = pkgInfo.applicationInfo.loadIcon(pm)
+            version = pkgInfo.versionName.orEmpty()
+            val icon = applicationInfo.loadIcon(pm)
             bitmap = getAppIconCompat(icon)
-            sysApp = (pkgInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+            sysApp = (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
         }
     }
 

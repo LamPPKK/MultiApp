@@ -45,6 +45,8 @@ https://t.me/xunijun
 
 This repository is no longer maintained as of 2023; please contact directly for commercial use.
 
+The `LamPPKK` fork contains a modern Android 14–16 development baseline. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the verified toolchain, module architecture, build workflow and remaining runtime limitations.
+
 ## Project Introduction
 MultiApp is a virtual Android container, which can open more apps. This project provides a simple UI for you to experience. You can also download the official apk from [Google play](https://play.google.com/store/apps/details?id=com.waxmoon.ma.gp) to enjoy a better experience. If you are an android developer, you can also customize your own UI. You don't need to pay attention to the technical details that are difficult to understand. You can use the api provided by [opensdk](https://github.com/WaxMoon/opensdk) to open more apps. If you have any questions during the experience, you can contact us by WeChat.
 
